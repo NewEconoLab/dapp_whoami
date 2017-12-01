@@ -59,16 +59,7 @@ namespace plugin_whoami
             return bts.Take(bts.Length - 4).Skip(1).ToArray();
 
         }
-        public static byte[] FromHexString(string str)
-        {
-            byte[] data = new byte[str.Length / 2];
-            for (var i = 0; i < str.Length / 2; i++)
-            {
-                var hex = str.Substring(i * 2, 2);
-                data[i] = byte.Parse(hex, System.Globalization.NumberStyles.HexNumber);
-            }
-            return data;
-        }
+
         int index = 0;
         private void button2_Click(object sender, EventArgs e)
         {
@@ -82,46 +73,13 @@ namespace plugin_whoami
 
         private void button3_Click(object sender, EventArgs e)
         {
-            //拼合调用脚本
-            byte[] script = null;
-            using (ScriptBuilder sb = new ScriptBuilder())
+            var p1 = new Neo.SmartContract.ContractParameter(Neo.SmartContract.ContractParameterType.String)
             {
-                var pkeybytes = FromHexString(this.textBoxPubKey.Text);
-                var pubkey = Neo.Cryptography.ECC.ECPoint.FromBytes(pkeybytes, Neo.Cryptography.ECC.ECCurve.Secp256r1);
-                ContractParameter[] parameters = new Neo.SmartContract.ContractParameter[] {
-                  new Neo.SmartContract.ContractParameter(Neo.SmartContract.ContractParameterType.PublicKey)
-                    {
-                        Value = pubkey
-                    },
-                    new Neo.SmartContract.ContractParameter(Neo.SmartContract.ContractParameterType.String)
-                    {
-                        Value = this.textBoxName.Text
-                    }
-                };
-                var hash = Neo.UInt160.Parse(plugin_whoami.whoami_scripthash);
-                Neo.VM.Helper.EmitAppCall(sb, hash, parameters);
-                script = sb.ToArray();
+                Value = textBoxName.Text
+            };
+            var script = plugin_whoami.MakeAppCallScript(plugin_whoami.microblog_scripthash, this.textBoxPubKey.Text, p1);
+            plugin_whoami.CallScript(script);
 
-            }
-
-            var stx = new InvocationTransaction();
-            //生成交易
-            InvocationTransaction tx = null;
-            {
-                Fixed8 fee = Fixed8.FromDecimal((decimal)0.001);
-                tx = plugin_whoami.api.CurrentWallet.MakeTransaction(new InvocationTransaction
-                {
-                    Version = 1,
-                    Script = script,
-                    Gas = Fixed8.Zero,
-                    Attributes = new TransactionAttribute[0],
-                    Inputs = new CoinReference[0],
-                    Outputs = new TransactionOutput[0]
-                }, fee: fee);
-            }
-
-            //签名发送交易
-            plugin_whoami.api.SignAndShowInformation(tx);
         }
 
         private void textBoxPubKey_TextChanged(object sender, EventArgs e)
