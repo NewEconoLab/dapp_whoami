@@ -18,17 +18,17 @@ namespace plugin_whoami
 
         public string[] GetMenus()
         {
-            return new string[]{ "WhoAmI", "WhoAmI 增强版" };
+            return new string[] { "WhoAmI", "WhoAmI 增强版" };
         }
         public static IAPI api;
         public static System.Collections.Concurrent.ConcurrentQueue<Neo.VM.StackItem> notifys = new System.Collections.Concurrent.ConcurrentQueue<Neo.VM.StackItem>();
         public static System.Collections.Concurrent.ConcurrentQueue<Neo.VM.StackItem> notifyexs = new System.Collections.Concurrent.ConcurrentQueue<Neo.VM.StackItem>();
 
-        public static string whoami_scripthash= "0x42832a25cf11d0ceee5629cb8b4daee9bac207ca";
+        public static string whoami_scripthash = "0x42832a25cf11d0ceee5629cb8b4daee9bac207ca";
         public static string microblog_scripthash = "0x608f129ddd415c003efd0b9fbe33b47854a6afee";
         public void Init(IAPI api)
         {
-            var hash =  UInt160.Parse(whoami_scripthash);
+            var hash = UInt160.Parse(whoami_scripthash);
             var hashex = UInt160.Parse(microblog_scripthash);
             plugin_whoami.api = api;
             Neo.Core.Blockchain.Notify += (s, e) =>
@@ -37,7 +37,7 @@ namespace plugin_whoami
                   {
                       notifys.Enqueue(e.Notifications[0].State);
                   }
-                  else if(e.Notifications[0].ScriptHash == hashex)
+                  else if (e.Notifications[0].ScriptHash == hashex)
                   {
                       notifyexs.Enqueue(e.Notifications[0].State);
                   }
@@ -68,8 +68,9 @@ namespace plugin_whoami
             }
             return data;
         }
-        public static void CallScript(byte[] script)
+        public static ApplicationEngine CallScript(byte[] script, bool bDebug = false)
         {
+            ApplicationEngine engine = null;
             Fixed8 net_fee = Fixed8.FromDecimal(0.001m);
             //生成交易
             InvocationTransaction tx = new InvocationTransaction();
@@ -79,7 +80,14 @@ namespace plugin_whoami
                 tx.Attributes = new TransactionAttribute[0];
                 tx.Inputs = new CoinReference[0];
                 tx.Outputs = new TransactionOutput[0];
-                ApplicationEngine engine = ApplicationEngine.Run(tx.Script, tx);
+                if (bDebug)
+                {
+                    engine = ApplicationEngine.RunWithDebug(tx.Script, tx);
+                }
+                else
+                {
+                    engine = ApplicationEngine.Run(tx.Script, tx);
+                }
 
                 if (!engine.State.HasFlag(VMState.FAULT))
                 {
@@ -90,7 +98,7 @@ namespace plugin_whoami
                 else
                 {
                     MessageBox.Show("脚本错误");
-                    return;
+                    return null;
                 }
             }
             InvocationTransaction stx = null;
@@ -109,6 +117,7 @@ namespace plugin_whoami
 
             //签名发送交易
             plugin_whoami.api.SignAndShowInformation(stx);
+            return engine;
         }
         public static byte[] MakeAppCallScript(string script_hash, string _pubkey, params ContractParameter[] _params)
         {

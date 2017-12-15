@@ -77,7 +77,7 @@ namespace plugin_whoami
             {
                 Value = textBoxName.Text
             };
-            var script = plugin_whoami.MakeAppCallScript(plugin_whoami.microblog_scripthash, this.textBoxPubKey.Text, p1);
+            var script = plugin_whoami.MakeAppCallScript(plugin_whoami.whoami_scripthash, this.textBoxPubKey.Text, p1);
             plugin_whoami.CallScript(script);
 
         }
