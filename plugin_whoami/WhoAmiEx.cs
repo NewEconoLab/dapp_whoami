@@ -115,9 +115,9 @@ namespace plugin_whoami
         {
             if (plugin_whoami.api.CurrentWallet == null)
                 return;
-            var count = plugin_whoami.api.CurrentWallet.GetKeys().Count();
+            var count = plugin_whoami.api.CurrentWallet.GetAccounts().Count();
             if (index >= count) index = 0;
-            var key = plugin_whoami.api.CurrentWallet.GetKeys().ToArray()[index];
+            var key = plugin_whoami.api.CurrentWallet.GetAccounts().ToArray()[index].GetKey();
             this.textBoxPubKey.Text = key.PublicKey.EncodePoint(true).ToHexString();
         }
 
